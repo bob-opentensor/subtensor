@@ -365,6 +365,13 @@ pub mod pallet {
         ValueQuery,
         DefaultAccountTake<T>,
     >;
+    /// -- ITEM (switches liquid alpha on)
+    #[pallet::type_value] 
+    pub fn DefaultLiquidAlpha<T: Config>() -> bool {
+        return true;
+    }
+    #[pallet::storage] // --- MAP ( netuid ) --> Whether or not Liquid Alpha is enabled
+    pub type LiquidAlphaOn<T> = StorageMap<_, Blake2_128Concat, u16, bool, ValueQuery, DefaultLiquidAlpha<T>>;
 
     /// =====================================
     /// ==== Difficulty / Registrations =====

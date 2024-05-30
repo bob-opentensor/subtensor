@@ -2,7 +2,6 @@ use super::*;
 use frame_support::storage::IterableStorageDoubleMap;
 use sp_core::{Get, H256, U256};
 use sp_io::hashing::{keccak_256, sha2_256};
-use sp_runtime::MultiAddress;
 use system::pallet_prelude::BlockNumberFor;
 
 const LOG_TARGET: &str = "runtime::subtensor::registration";
@@ -26,13 +25,13 @@ impl<T: Config> Pallet<T> {
     ///     - On successfully registereing a uid to a neuron slot on a subnetwork.
     ///
     /// # Raises:
-    /// * 'NetworkDoesNotExist':
+    /// * 'SubNetworkDoesNotExist':
     ///     - Attempting to registed to a non existent network.
     ///
     /// * 'TooManyRegistrationsThisBlock':
     ///     - This registration exceeds the total allowed on this network this block.
     ///
-    /// * 'AlreadyRegistered':
+    /// * 'HotKeyAlreadyRegisteredInSubNet':
     ///     - The hotkey is already registered on this network.
     ///
     pub fn do_burned_registration(
@@ -52,17 +51,17 @@ impl<T: Config> Pallet<T> {
         // --- 2. Ensure the passed network is valid.
         ensure!(
             netuid != Self::get_root_netuid(),
-            Error::<T>::OperationNotPermittedOnRootSubnet
+            Error::<T>::RegistrationNotPermittedOnRootSubnet
         );
         ensure!(
             Self::if_subnet_exist(netuid),
-            Error::<T>::NetworkDoesNotExist
+            Error::<T>::SubNetworkDoesNotExist
         );
 
         // --- 3. Ensure the passed network allows registrations.
         ensure!(
             Self::get_network_registration_allowed(netuid),
-            Error::<T>::RegistrationDisabled
+            Error::<T>::SubNetRegistrationDisabled
         );
 
         // --- 4. Ensure we are not exceeding the max allowed registrations per block.
@@ -82,7 +81,7 @@ impl<T: Config> Pallet<T> {
         // --- 4. Ensure that the key is not already registered.
         ensure!(
             !Uids::<T>::contains_key(netuid, &hotkey),
-            Error::<T>::AlreadyRegistered
+            Error::<T>::HotKeyAlreadyRegisteredInSubNet
         );
 
         // DEPRECATED --- 6. Ensure that the key passes the registration requirement
@@ -191,13 +190,13 @@ impl<T: Config> Pallet<T> {
     ///     - On successfully registereing a uid to a neuron slot on a subnetwork.
     ///
     /// # Raises:
-    /// *'NetworkDoesNotExist':
+    /// *'SubNetworkDoesNotExist':
     ///     - Attempting to registed to a non existent network.
     ///
     /// *'TooManyRegistrationsThisBlock':
     ///     - This registration exceeds the total allowed on this network this block.
     ///
-    /// *'AlreadyRegistered':
+    /// *'HotKeyAlreadyRegisteredInSubNet':
     ///     - The hotkey is already registered on this network.
     ///
     /// *'InvalidWorkBlock':
@@ -229,22 +228,25 @@ impl<T: Config> Pallet<T> {
             coldkey
         );
 
-        ensure!(signing_origin == hotkey, Error::<T>::HotkeyOriginMismatch);
+        ensure!(
+            signing_origin == hotkey,
+            Error::<T>::TransactorAccountShouldBeHotKey
+        );
 
         // --- 2. Ensure the passed network is valid.
         ensure!(
             netuid != Self::get_root_netuid(),
-            Error::<T>::OperationNotPermittedOnRootSubnet
+            Error::<T>::RegistrationNotPermittedOnRootSubnet
         );
         ensure!(
             Self::if_subnet_exist(netuid),
-            Error::<T>::NetworkDoesNotExist
+            Error::<T>::SubNetworkDoesNotExist
         );
 
         // --- 3. Ensure the passed network allows registrations.
         ensure!(
             Self::get_network_pow_registration_allowed(netuid),
-            Error::<T>::RegistrationDisabled
+            Error::<T>::SubNetRegistrationDisabled
         );
 
         // --- 4. Ensure we are not exceeding the max allowed registrations per block.
@@ -264,7 +266,7 @@ impl<T: Config> Pallet<T> {
         // --- 6. Ensure that the key is not already registered.
         ensure!(
             !Uids::<T>::contains_key(netuid, &hotkey),
-            Error::<T>::AlreadyRegistered
+            Error::<T>::HotKeyAlreadyRegisteredInSubNet
         );
 
         // --- 7. Ensure the passed block number is valid, not in the future or too old.
@@ -528,18 +530,14 @@ impl<T: Config> Pallet<T> {
         hash_as_vec
     }
 
-    #[allow(clippy::indexing_slicing)]
     pub fn hash_block_and_hotkey(block_hash_bytes: &[u8; 32], hotkey: &T::AccountId) -> H256 {
-        // Get the public key from the account id.
-        let hotkey_pubkey: MultiAddress<T::AccountId, ()> = MultiAddress::Id(hotkey.clone());
-        let binding = hotkey_pubkey.encode();
-        // Skip extra 0th byte.
-        let hotkey_bytes: &[u8] = binding[1..].as_ref();
+        let binding = hotkey.encode();
+        // Safe because Substrate guarantees that all AccountId types are at least 32 bytes
+        let (hotkey_bytes, _) = binding.split_at(32);
         let mut full_bytes = [0u8; 64];
         let (first_half, second_half) = full_bytes.split_at_mut(32);
         first_half.copy_from_slice(block_hash_bytes);
-        // Safe because Substrate guarantees that all AccountId types are at least 32 bytes
-        second_half.copy_from_slice(&hotkey_bytes[..32]);
+        second_half.copy_from_slice(hotkey_bytes);
         let keccak_256_seal_hash_vec: [u8; 32] = keccak_256(&full_bytes[..]);
 
         H256::from_slice(&keccak_256_seal_hash_vec)
@@ -609,15 +607,15 @@ impl<T: Config> Pallet<T> {
         let block: u64 = Self::get_current_block_as_u64();
         ensure!(
             !Self::exceeds_tx_rate_limit(Self::get_last_tx_block(&coldkey), block),
-            Error::<T>::TxRateLimitExceeded
+            Error::<T>::HotKeySetTxRateLimitExceeded
         );
 
         weight.saturating_accrue(T::DbWeight::get().reads(2));
 
-        ensure!(old_hotkey != new_hotkey, Error::<T>::AlreadyRegistered);
+        ensure!(old_hotkey != new_hotkey, Error::<T>::NewHotKeyIsSameWithOld);
         ensure!(
             !Self::is_hotkey_registered_on_any_network(new_hotkey),
-            Error::<T>::AlreadyRegistered
+            Error::<T>::HotKeyAlreadyRegisteredInSubNet
         );
 
         weight
@@ -626,7 +624,7 @@ impl<T: Config> Pallet<T> {
         let swap_cost = 1_000_000_000u64;
         ensure!(
             Self::can_remove_balance_from_coldkey_account(&coldkey, swap_cost),
-            Error::<T>::NotEnoughBalance
+            Error::<T>::NotEnoughBalanceToPaySwapHotKey
         );
         let actual_burn_amount = Self::remove_balance_from_coldkey_account(&coldkey, swap_cost)?;
         Self::burn_tokens(actual_burn_amount);

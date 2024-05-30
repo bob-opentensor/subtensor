@@ -288,6 +288,24 @@ impl<T: Config> Pallet<T> {
         Self::deposit_event(Event::NetworkRateLimitSet(limit));
     }
 
+    /// Checks if registrations are allowed for a given subnet.
+    ///
+    /// This function retrieves the subnet hyperparameters for the specified subnet and checks the `registration_allowed` flag.
+    /// If the subnet doesn't exist or doesn't have hyperparameters defined, it returns `false`.
+    ///
+    /// # Arguments
+    ///
+    /// * `netuid` - The unique identifier of the subnet.
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - `true` if registrations are allowed for the subnet, `false` otherwise.
+    pub fn is_registration_allowed(netuid: u16) -> bool {
+        Self::get_subnet_hyperparams(netuid)
+            .map(|params| params.registration_allowed)
+            .unwrap_or(false)
+    }
+
     /// Computes and sets emission values for the root network which determine the emission for all subnets.
     ///
     /// This function is responsible for calculating emission based on network weights, stake values,
@@ -297,7 +315,7 @@ impl<T: Config> Pallet<T> {
         // --- 0. The unique ID associated with the root network.
         let root_netuid: u16 = Self::get_root_netuid();
 
-        // --- 3. Check if we should update the emission values based on blocks since emission was last set.
+        // --- 1. Check if we should update the emission values based on blocks since emission was last set.
         let blocks_until_next_epoch: u64 =
             Self::blocks_until_next_epoch(root_netuid, Self::get_tempo(root_netuid), block_number);
         if blocks_until_next_epoch != 0 {
@@ -306,7 +324,7 @@ impl<T: Config> Pallet<T> {
             return Err("");
         }
 
-        // --- 1. Retrieves the number of root validators on subnets.
+        // --- 2. Retrieves the number of root validators on subnets.
         let n: u16 = Self::get_num_root_validators();
         log::debug!("n:\n{:?}\n", n);
         if n == 0 {
@@ -314,7 +332,7 @@ impl<T: Config> Pallet<T> {
             return Err("No validators to validate emission values.");
         }
 
-        // --- 2. Obtains the number of registered subnets.
+        // --- 3. Obtains the number of registered subnets.
         let k: u16 = Self::get_all_subnet_netuids().len() as u16;
         log::debug!("k:\n{:?}\n", k);
         if k == 0 {
@@ -346,17 +364,21 @@ impl<T: Config> Pallet<T> {
         inplace_normalize_64(&mut stake_i64);
         log::debug!("S:\n{:?}\n", &stake_i64);
 
-        // --- 8. Retrieves the network weights in a 2D Vector format. Weights have shape
+        // --- 7. Retrieves the network weights in a 2D Vector format. Weights have shape
         // n x k where is n is the number of registered peers and k is the number of subnets.
-        let weights: Vec<Vec<I64F64>> = Self::get_root_weights();
+        let mut weights: Vec<Vec<I64F64>> = Self::get_root_weights();
         log::debug!("W:\n{:?}\n", &weights);
 
-        // --- 9. Calculates the rank of networks. Rank is a product of weights and stakes.
+        // Normalize weights.
+        inplace_row_normalize_64(&mut weights);
+        log::debug!("W(norm):\n{:?}\n", &weights);
+
+        // --- 8. Calculates the rank of networks. Rank is a product of weights and stakes.
         // Ranks will have shape k, a score for each subnet.
         let ranks: Vec<I64F64> = matmul_64(&weights, &stake_i64);
         log::debug!("R:\n{:?}\n", &ranks);
 
-        // --- 10. Calculates the trust of networks. Trust is a sum of all stake with weights > 0.
+        // --- 9. Calculates the trust of networks. Trust is a sum of all stake with weights > 0.
         // Trust will have shape k, a score for each subnet.
         let total_networks = Self::get_num_subnets();
         let mut trust = vec![I64F64::from_num(0); total_networks as usize];
@@ -383,7 +405,7 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        // --- 11. Calculates the consensus of networks. Consensus is a sigmoid normalization of the trust scores.
+        // --- 10. Calculates the consensus of networks. Consensus is a sigmoid normalization of the trust scores.
         // Consensus will have shape k, a score for each subnet.
         log::debug!("T:\n{:?}\n", &trust);
         let one = I64F64::from_num(1);
@@ -443,7 +465,7 @@ impl<T: Config> Pallet<T> {
         let current_block_number: u64 = Self::get_current_block_as_u64();
         ensure!(
             Self::if_subnet_exist(root_netuid),
-            Error::<T>::NetworkDoesNotExist
+            Error::<T>::RootNetworkDoesNotExist
         );
 
         // --- 1. Ensure that the call originates from a signed source and retrieve the caller's account ID (coldkey).
@@ -471,7 +493,7 @@ impl<T: Config> Pallet<T> {
         // --- 4. Check if the hotkey is already registered. If so, error out.
         ensure!(
             !Uids::<T>::contains_key(root_netuid, &hotkey),
-            Error::<T>::AlreadyRegistered
+            Error::<T>::HotKeyAlreadyRegisteredInSubNet
         );
 
         // --- 6. Create a network account for the user if it doesn't exist.
@@ -586,7 +608,7 @@ impl<T: Config> Pallet<T> {
         values: Vec<u16>,
         version_key: u64,
     ) -> dispatch::DispatchResult {
-        // --- 1. Check the caller's signature. This is the coldkey of a registered account.
+        // Check the caller's signature. This is the coldkey of a registered account.
         let coldkey = ensure_signed(origin)?;
         log::info!(
             "do_set_root_weights( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
@@ -596,94 +618,99 @@ impl<T: Config> Pallet<T> {
             values
         );
 
-        // --- 2. Check that the signer coldkey owns the hotkey
+        // Check the hotkey account exists.
         ensure!(
-            Self::coldkey_owns_hotkey(&coldkey, &hotkey)
-                && Self::get_owning_coldkey_for_hotkey(&hotkey) == coldkey,
+            Self::hotkey_account_exists(&hotkey),
+            Error::<T>::HotKeyAccountNotExists
+        );
+
+        // Check that the signer coldkey owns the hotkey
+        ensure!(
+            Self::get_owning_coldkey_for_hotkey(&hotkey) == coldkey,
             Error::<T>::NonAssociatedColdKey
         );
 
-        // --- 3. Check to see if this is a valid network.
+        // Check to see if this is a valid network.
         ensure!(
             Self::if_subnet_exist(netuid),
-            Error::<T>::NetworkDoesNotExist
+            Error::<T>::SubNetworkDoesNotExist
         );
 
-        // --- 4. Check that this is the root network.
+        // Check that this is the root network.
         ensure!(netuid == Self::get_root_netuid(), Error::<T>::NotRootSubnet);
 
-        // --- 5. Check that the length of uid list and value list are equal for this network.
+        // Check that the length of uid list and value list are equal for this network.
         ensure!(
             Self::uids_match_values(&uids, &values),
             Error::<T>::WeightVecNotEqualSize
         );
 
-        // --- 6. Check to see if the number of uids is within the max allowed uids for this network.
+        // Check to see if the number of uids is within the max allowed uids for this network.
         // For the root network this number is the number of subnets.
         ensure!(
             !Self::contains_invalid_root_uids(&uids),
-            Error::<T>::InvalidUid
+            Error::<T>::UidVecContainInvalidOne
         );
 
-        // --- 7. Check to see if the hotkey is registered to the passed network.
+        // Check to see if the hotkey is registered to the passed network.
         ensure!(
             Self::is_hotkey_registered_on_network(netuid, &hotkey),
-            Error::<T>::NotRegistered
+            Error::<T>::HotKeyNotRegisteredInSubNet
         );
 
-        // --- 8. Check to see if the hotkey has enough stake to set weights.
+        // Check to see if the hotkey has enough stake to set weights.
         ensure!(
             Self::get_total_stake_for_hotkey(&hotkey) >= Self::get_weights_min_stake(),
             Error::<T>::NotEnoughStakeToSetWeights
         );
 
-        // --- 9. Ensure version_key is up-to-date.
+        // Ensure version_key is up-to-date.
         ensure!(
             Self::check_version_key(netuid, version_key),
-            Error::<T>::IncorrectNetworkVersionKey
+            Error::<T>::IncorrectWeightVersionKey
         );
 
-        // --- 10. Get the neuron uid of associated hotkey on network netuid.
+        // Get the neuron uid of associated hotkey on network netuid.
         let neuron_uid = Self::get_uid_for_net_and_hotkey(netuid, &hotkey)?;
 
-        // --- 11. Ensure the uid is not setting weights faster than the weights_set_rate_limit.
+        // Ensure the uid is not setting weights faster than the weights_set_rate_limit.
         let current_block: u64 = Self::get_current_block_as_u64();
         ensure!(
             Self::check_rate_limit(netuid, neuron_uid, current_block),
             Error::<T>::SettingWeightsTooFast
         );
 
-        // --- 12. Ensure the passed uids contain no duplicates.
+        // Ensure the passed uids contain no duplicates.
         ensure!(!Self::has_duplicate_uids(&uids), Error::<T>::DuplicateUids);
 
-        // --- 13. Ensure that the weights have the required length.
+        // Ensure that the weights have the required length.
         ensure!(
             Self::check_length(netuid, neuron_uid, &uids, &values),
-            Error::<T>::NotSettingEnoughWeights
+            Error::<T>::WeightVecLengthIsLow
         );
 
-        // --- 14. Max-upscale the weights.
+        // Max-upscale the weights.
         let max_upscaled_weights: Vec<u16> = vec_u16_max_upscale_to_u16(&values);
 
-        // --- 15. Ensure the weights are max weight limited
+        // Ensure the weights are max weight limited
         ensure!(
             Self::max_weight_limited(netuid, neuron_uid, &uids, &max_upscaled_weights),
             Error::<T>::MaxWeightExceeded
         );
 
-        // --- 16. Zip weights for sinking to storage map.
+        // Zip weights for sinking to storage map.
         let mut zipped_weights: Vec<(u16, u16)> = vec![];
         for (uid, val) in uids.iter().zip(max_upscaled_weights.iter()) {
             zipped_weights.push((*uid, *val))
         }
 
-        // --- 17. Set weights under netuid, uid double map entry.
+        // Set weights under netuid, uid double map entry.
         Weights::<T>::insert(netuid, neuron_uid, zipped_weights);
 
-        // --- 18. Set the activity for the weights on this network.
+        // Set the activity for the weights on this network.
         Self::set_last_update_for_uid(netuid, neuron_uid, current_block);
 
-        // --- 19. Emit the tracking event.
+        // Emit the tracking event.
         log::info!(
             "RootWeightsSet( netuid:{:?}, neuron_uid:{:?} )",
             netuid,
@@ -691,7 +718,7 @@ impl<T: Config> Pallet<T> {
         );
         Self::deposit_event(Event::WeightsSet(netuid, neuron_uid));
 
-        // --- 20. Return ok.
+        // Return ok.
         Ok(())
     }
 
@@ -763,7 +790,7 @@ impl<T: Config> Pallet<T> {
         let last_lock_block = Self::get_network_last_lock_block();
         ensure!(
             current_block.saturating_sub(last_lock_block) >= NetworkRateLimit::<T>::get(),
-            Error::<T>::TxRateLimitExceeded
+            Error::<T>::NetworkTxRateLimitExceeded
         );
 
         // --- 2. Calculate and lock the required tokens.
@@ -839,7 +866,7 @@ impl<T: Config> Pallet<T> {
     /// * 'NetworkRemoved': Emitted when a network is successfully removed.
     ///
     /// # Raises:
-    /// * 'NetworkDoesNotExist': If the specified network does not exist.
+    /// * 'SubNetworkDoesNotExist': If the specified network does not exist.
     /// * 'NotSubnetOwner': If the caller does not own the specified subnet.
     ///
     pub fn user_remove_network(origin: T::RuntimeOrigin, netuid: u16) -> dispatch::DispatchResult {
@@ -849,7 +876,7 @@ impl<T: Config> Pallet<T> {
         // --- 2. Ensure this subnet exists.
         ensure!(
             Self::if_subnet_exist(netuid),
-            Error::<T>::NetworkDoesNotExist
+            Error::<T>::SubNetworkDoesNotExist
         );
 
         // --- 3. Ensure the caller owns this subnet.

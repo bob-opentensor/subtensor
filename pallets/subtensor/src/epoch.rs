@@ -118,19 +118,19 @@ impl<T: Config> Pallet<T> {
 
         // Mask weights that are not from permitted validators.
         inplace_mask_rows(&validator_forbids, &mut weights);
-        // log::trace!( "W (permit): {:?}", &weights );
+        log::trace!( "W (permit): {:?}", &weights );
 
         // Remove self-weight by masking diagonal.
         inplace_mask_diag(&mut weights);
-        // log::trace!( "W (permit+diag):\n{:?}\n", &weights );
+        log::trace!( "W (permit+diag):\n{:?}\n", &weights );
 
         // Mask outdated weights: remove weights referring to deregistered neurons.
         inplace_mask_matrix(&outdated, &mut weights);
-        // log::trace!( "W (permit+diag+outdate):\n{:?}\n", &weights );
+        log::trace!( "W (permit+diag+outdate):\n{:?}\n", &weights );
 
         // Normalize remaining weights.
         inplace_row_normalize(&mut weights);
-        // log::trace!( "W (mask+norm):\n{:?}\n", &weights );
+        log::trace!( "W (mask+norm):\n{:?}\n", &weights );
 
         // ================================
         // == Consensus, Validator Trust ==
@@ -167,18 +167,28 @@ impl<T: Config> Pallet<T> {
         let mut bonds: Vec<Vec<I32F32>> = Self::get_bonds(netuid);
         inplace_mask_matrix(&outdated, &mut bonds); // mask outdated bonds
         inplace_col_normalize(&mut bonds); // sum_i b_ij = 1
-                                           // log::trace!( "B:\n{:?}\n", &bonds );
+                                           log::trace!( "B:\n{:?}\n", &bonds );
 
         // Compute bonds delta column normalized.
         let mut bonds_delta: Vec<Vec<I32F32>> = row_hadamard(&weights, &active_stake); // ΔB = W◦S
         inplace_col_normalize(&mut bonds_delta); // sum_i b_ij = 1
-                                                 // log::trace!( "ΔB:\n{:?}\n", &bonds_delta );
+        log::trace!("ΔB:\n{:?}\n", &bonds_delta);
+        let mut ema_bonds: Vec<Vec<I32F32>>;
+        if LiquidAlphaOn::<T>::get(netuid) {
+            let alpha: Vec<I32F32> = consensus
+                .iter()
+                .map(|c: &I32F32| I32F32::from_num(1.0) - c)
+                .collect();
+            ema_bonds = mat_ema_alpha_vec(&bonds_delta, &bonds, &alpha);
+        } else {
+            // Compute bonds moving average.
+            let bonds_moving_average: I64F64 =
+                I64F64::from_num(Self::get_bonds_moving_average(netuid))
+                    / I64F64::from_num(1_000_000);
+            let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
+            ema_bonds = mat_ema(&bonds_delta, &bonds, alpha);
+        }
 
-        // Compute bonds moving average.
-        let bonds_moving_average: I64F64 =
-            I64F64::from_num(Self::get_bonds_moving_average(netuid)) / I64F64::from_num(1_000_000);
-        let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
-        let mut ema_bonds: Vec<Vec<I32F32>> = mat_ema(&bonds_delta, &bonds, alpha);
         inplace_col_normalize(&mut ema_bonds); // sum_i b_ij = 1
                                                // log::trace!( "emaB:\n{:?}\n", &ema_bonds );
 
@@ -532,17 +542,26 @@ impl<T: Config> Pallet<T> {
 
         // Normalize bonds delta.
         inplace_col_normalize_sparse(&mut bonds_delta, n); // sum_i b_ij = 1
-                                                           log::trace!( "ΔB (norm): {:?}", &bonds_delta );
+        log::trace!("ΔB (norm): {:?}", &bonds_delta);
 
         // Compute bonds moving average.
-        let bonds_moving_average: I64F64 =
-            I64F64::from_num(Self::get_bonds_moving_average(netuid)) / I64F64::from_num(1_000_000);
-        let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
-        let mut ema_bonds: Vec<Vec<(u16, I32F32)>> = mat_ema_sparse(&bonds_delta, &bonds, alpha);
-
+        let mut ema_bonds: Vec<Vec<(u16, I32F32)>>;
+        if LiquidAlphaOn::<T>::get(netuid) {
+            let alpha: Vec<I32F32> = consensus
+                .iter()
+                .map(|c: &I32F32| I32F32::from_num(1.0) - c)
+                .collect();
+            ema_bonds = mat_ema_alpha_vec_sparse(&bonds_delta, &bonds, &alpha);
+        } else {
+            let bonds_moving_average: I64F64 =
+                I64F64::from_num(Self::get_bonds_moving_average(netuid))
+                    / I64F64::from_num(1_000_000);
+            let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
+            ema_bonds = mat_ema_sparse(&bonds_delta, &bonds, alpha);
+        }
         // Normalize EMA bonds.
         inplace_col_normalize_sparse(&mut ema_bonds, n); // sum_i b_ij = 1
-                                                         log::trace!( "emaB: {:?}", &ema_bonds );
+        log::trace!("emaB: {:?}", &ema_bonds);
 
         // Compute dividends: d_i = SUM(j) b_ij * inc_j.
         // range: I32F32(0, 1)

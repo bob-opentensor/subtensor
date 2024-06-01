@@ -1143,6 +1143,33 @@ pub fn mat_ema_alpha_vec_sparse(
     result
 }
 
+/// Return matrix exponential moving average: `alpha_j * a_ij + one_minus_alpha_j * b_ij`.
+/// `alpha_` is the EMA coefficient passed as a vector per col.
+/// @TODO: Write tests
+#[allow(dead_code)]
+pub fn mat_ema_alpha_vec(
+    new: &Vec<Vec<I32F32>>,
+    old: &Vec<Vec<I32F32>>,
+    alpha: &Vec<I32F32>,
+) -> Vec<Vec<I32F32>> {
+    if new.is_empty() || new[0].is_empty() {
+        return vec![vec![]; 1];
+    }
+    assert!(new.len() == old.len());
+    assert!(new[0].len() == alpha.len());
+
+    let mut result: Vec<Vec<I32F32>> = vec![vec![I32F32::from_num(0.0); new[0].len()]; new.len()];
+
+    for i in 0..new.len() {
+        assert!(new[i].len() == old[i].len());
+        for j in 0..new[i].len() {
+            let alpha_val = alpha[j];
+            let one_minus_alpha = I32F32::from_num(1.0) - alpha_val;
+            result[i][j] = alpha_val * new[i][j] + one_minus_alpha * old[i][j];
+        }
+    }
+    result
+}
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
 mod tests {
@@ -1206,6 +1233,20 @@ mod tests {
 
     fn vec_to_fixed(vector: &[f32]) -> Vec<I32F32> {
         vector.iter().map(|x| I32F32::from_num(*x)).collect()
+    }
+
+    fn mat_to_fixed(matrix: &[Vec<f32>]) -> Vec<Vec<I32F32>> {
+        matrix.iter().map(|row| vec_to_fixed(row)).collect()
+    }
+
+    fn assert_mat_approx_eq(left: &Vec<Vec<I32F32>>, right: &Vec<Vec<I32F32>>, epsilon: I32F32) {
+        assert_eq!(left.len(), right.len());
+        for (left_row, right_row) in left.iter().zip(right.iter()) {
+            assert_eq!(left_row.len(), right_row.len());
+            for (left_val, right_val) in left_row.iter().zip(right_row.iter()) {
+                assert!((left_val - right_val).abs() <= epsilon, "left: {:?}, right: {:?}", left_val, right_val);
+            }
+        }
     }
 
     #[test]
@@ -3405,4 +3446,81 @@ mod tests {
             ]
         );
     }
+
+
+    #[test]
+    fn test_mat_ema_alpha_vec_basic() {
+        let new = mat_to_fixed(&[
+            vec![1.0, 2.0, 3.0],
+            vec![4.0, 5.0, 6.0],
+        ]);
+        let old = mat_to_fixed(&[
+            vec![0.5, 1.5, 2.5],
+            vec![3.5, 4.5, 5.5],
+        ]);
+        let alpha = vec![I32F32::from_num(0.5), I32F32::from_num(0.5), I32F32::from_num(0.5)];
+        let expected = mat_to_fixed(&[
+            vec![0.75, 1.75, 2.75],
+            vec![3.75, 4.75, 5.75],
+        ]);
+        let result = mat_ema_alpha_vec(&new, &old, &alpha);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_mat_ema_alpha_vec_varying_alpha() {
+        let new = mat_to_fixed(&[
+            vec![1.0, 2.0, 3.0],
+            vec![4.0, 5.0, 6.0],
+        ]);
+        let old = mat_to_fixed(&[
+            vec![0.5, 1.5, 2.5],
+            vec![3.5, 4.5, 5.5],
+        ]);
+        let alpha = vec![I32F32::from_num(0.2), I32F32::from_num(0.5), I32F32::from_num(0.8)];
+        let expected = mat_to_fixed(&[
+            vec![0.6, 1.75, 2.9],
+            vec![3.6, 4.75, 5.9],
+        ]);
+        let result = mat_ema_alpha_vec(&new, &old, &alpha);
+        assert_mat_approx_eq(&result, &expected, I32F32::from_num(1e-6));
+
+    }
+
+    #[test]
+    fn test_mat_ema_alpha_vec_empty_matrices() {
+        let new: Vec<Vec<I32F32>> = vec![];
+        let old: Vec<Vec<I32F32>> = vec![];
+        let alpha: Vec<I32F32> = vec![];
+        let expected: Vec<Vec<I32F32>> = vec![vec![]; 1];
+        let result = mat_ema_alpha_vec(&new, &old, &alpha);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_mat_ema_alpha_vec_single_element() {
+        let new = mat_to_fixed(&[vec![1.0]]);
+        let old = mat_to_fixed(&[vec![0.5]]);
+        let alpha = vec![I32F32::from_num(0.5)];
+        let expected = mat_to_fixed(&[vec![0.75]]);
+        let result = mat_ema_alpha_vec(&new, &old, &alpha);
+        assert_eq!(result, expected);
+    }
+
+    // TODO: (@sd): Should these be non panicking?
+    #[test]
+    #[should_panic(expected = "assertion failed")]
+    fn test_mat_ema_alpha_vec_mismatched_dimensions() {
+        let new = mat_to_fixed(&[
+            vec![1.0, 2.0],
+            vec![3.0, 4.0],
+        ]);
+        let old = mat_to_fixed(&[
+            vec![1.0, 2.0, 3.0],
+            vec![4.0, 5.0, 6.0],
+        ]);
+        let alpha = vec![I32F32::from_num(0.5), I32F32::from_num(0.5), I32F32::from_num(0.5)];
+        let _result = mat_ema_alpha_vec(&new, &old, &alpha);
+    }
 }
+

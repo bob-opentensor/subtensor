@@ -1118,7 +1118,7 @@ pub fn sparse_threshold(w: &[Vec<(u16, I32F32)>], threshold: I32F32) -> Vec<Vec<
 pub fn mat_ema_alpha_vec_sparse(
     new: &Vec<Vec<(u16, I32F32)>>,
     old: &Vec<Vec<(u16, I32F32)>>,
-    alpha: &Vec<I32F32>
+    alpha: &Vec<I32F32>,
 ) -> Vec<Vec<(u16, I32F32)>> {
     assert!(new.len() == old.len());
     let n = new.len(); // assume square matrix, rows=cols
@@ -1562,8 +1562,6 @@ mod tests {
         }
         mat
     }
-
-    
 
     #[test]
     fn test_math_vec_to_sparse_mat_fixed() {
@@ -3288,7 +3286,6 @@ mod tests {
         assert_eq!(checked_sum(&single_input), Some(1));
     }
 
-
     #[test]
     fn test_mat_ema_alpha_vec_sparse_empty() {
         let new: Vec<Vec<(u16, I32F32)>> = Vec::new();
@@ -3311,18 +3308,21 @@ mod tests {
     fn test_mat_ema_alpha_vec_sparse_multiple_elements() {
         let new: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(1.0)), (1, I32F32::from_num(2.0))],
-            vec![(0, I32F32::from_num(3.0)), (1, I32F32::from_num(4.0))]
+            vec![(0, I32F32::from_num(3.0)), (1, I32F32::from_num(4.0))],
         ];
         let old: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(5.0)), (1, I32F32::from_num(6.0))],
-            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))]
+            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))],
         ];
         let alpha: Vec<I32F32> = vec![I32F32::from_num(0.1), I32F32::from_num(0.2)];
         let result = mat_ema_alpha_vec_sparse(&new, &old, &alpha);
-        assert_eq!(result, vec![
-            vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.6))],
-            vec![(0, I32F32::from_num(6.6)), (1, I32F32::from_num(7.6))]
-        ]);
+        assert_eq!(
+            result,
+            vec![
+                vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.6))],
+                vec![(0, I32F32::from_num(6.6)), (1, I32F32::from_num(7.6))]
+            ]
+        );
     }
 
     #[test]
@@ -3347,55 +3347,62 @@ mod tests {
     fn test_mat_ema_alpha_vec_sparse_mixed_alpha() {
         let new: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(1.0)), (1, I32F32::from_num(2.0))],
-            vec![(0, I32F32::from_num(3.0)), (1, I32F32::from_num(4.0))]
+            vec![(0, I32F32::from_num(3.0)), (1, I32F32::from_num(4.0))],
         ];
         let old: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(5.0)), (1, I32F32::from_num(6.0))],
-            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))]
+            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))],
         ];
         let alpha: Vec<I32F32> = vec![I32F32::from_num(0.3), I32F32::from_num(0.7)];
         let result = mat_ema_alpha_vec_sparse(&new, &old, &alpha);
-        assert_eq!(result, vec![
-            vec![(0, I32F32::from_num(3.2)), (1, I32F32::from_num(4.4))],
-            vec![(0, I32F32::from_num(5.2)), (1, I32F32::from_num(6.4))]
-        ]);
+        assert_eq!(
+            result,
+            vec![
+                vec![(0, I32F32::from_num(3.2)), (1, I32F32::from_num(4.4))],
+                vec![(0, I32F32::from_num(5.2)), (1, I32F32::from_num(6.4))]
+            ]
+        );
     }
 
     #[test]
     fn test_mat_ema_alpha_vec_sparse_sparse_matrix() {
         let new: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(1.0))],
-            vec![(1, I32F32::from_num(4.0))]
+            vec![(1, I32F32::from_num(4.0))],
         ];
         let old: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(5.0))],
-            vec![(1, I32F32::from_num(8.0))]
+            vec![(1, I32F32::from_num(8.0))],
         ];
         let alpha: Vec<I32F32> = vec![I32F32::from_num(0.5), I32F32::from_num(0.5)];
         let result = mat_ema_alpha_vec_sparse(&new, &old, &alpha);
-        assert_eq!(result, vec![
-            vec![(0, I32F32::from_num(3.0))],
-            vec![(1, I32F32::from_num(6.0))]
-        ]);
+        assert_eq!(
+            result,
+            vec![
+                vec![(0, I32F32::from_num(3.0))],
+                vec![(1, I32F32::from_num(6.0))]
+            ]
+        );
     }
 
     #[test]
     fn test_mat_ema_alpha_vec_sparse_different_lengths() {
         let new: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(1.0)), (1, I32F32::from_num(2.0))],
-            vec![(0, I32F32::from_num(3.0))]
+            vec![(0, I32F32::from_num(3.0))],
         ];
         let old: Vec<Vec<(u16, I32F32)>> = vec![
             vec![(0, I32F32::from_num(5.0)), (1, I32F32::from_num(6.0))],
-            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))]
+            vec![(0, I32F32::from_num(7.0)), (1, I32F32::from_num(8.0))],
         ];
         let alpha: Vec<I32F32> = vec![I32F32::from_num(0.1), I32F32::from_num(0.2)];
         let result = mat_ema_alpha_vec_sparse(&new, &old, &alpha);
-        assert_eq!(result, vec![
-            vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.6))],
-            vec![(0, I32F32::from_num(6.6))]
-        ]);
+        assert_eq!(
+            result,
+            vec![
+                vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.6))],
+                vec![(0, I32F32::from_num(6.6))]
+            ]
+        );
     }
 }
-
-

@@ -112,28 +112,28 @@ fn distribute_nodes(
 
 #[allow(dead_code)]
 fn uid_stats(netuid: u16, uid: u16) {
-    log::info!(
+    log::trace!(
         "stake: {:?}",
         SubtensorModule::get_total_stake_for_hotkey(&(U256::from(uid)))
     );
-    log::info!("rank: {:?}", SubtensorModule::get_rank_for_uid(netuid, uid));
-    log::info!(
+    log::trace!("rank: {:?}", SubtensorModule::get_rank_for_uid(netuid, uid));
+    log::trace!(
         "trust: {:?}",
         SubtensorModule::get_trust_for_uid(netuid, uid)
     );
-    log::info!(
+    log::trace!(
         "consensus: {:?}",
         SubtensorModule::get_consensus_for_uid(netuid, uid)
     );
-    log::info!(
+    log::trace!(
         "incentive: {:?}",
         SubtensorModule::get_incentive_for_uid(netuid, uid)
     );
-    log::info!(
+    log::trace!(
         "dividend: {:?}",
         SubtensorModule::get_dividends_for_uid(netuid, uid)
     );
-    log::info!(
+    log::trace!(
         "emission: {:?}",
         SubtensorModule::get_emission_for_uid(netuid, uid)
     );
@@ -235,7 +235,7 @@ fn init_run_epochs(
     }
 
     // === Run the epochs.
-    log::info!("Start {epochs} epoch(s)");
+    log::trace!("Start {epochs} epoch(s)");
     let start = Instant::now();
     for _ in 0..epochs {
         if sparse {
@@ -245,16 +245,16 @@ fn init_run_epochs(
         }
     }
     let duration = start.elapsed();
-    log::info!(
+    log::trace!(
         "Time elapsed in (sparse={sparse}) epoch() is: {:?}",
         duration
     );
 
     // let bonds = SubtensorModule::get_bonds( netuid );
     // for (uid, node) in vec![ (validators[0], "validator"), (servers[0], "server") ] {
-    // 	log::info!("\n{node}" );
+    // 	log::trace!("\n{node}" );
     // 	uid_stats(netuid, uid);
-    // 	log::info!("bonds: {:?} (on validator), {:?} (on server)", bonds[uid as usize][0], bonds[uid as usize][servers[0] as usize]);
+    // 	log::trace!("bonds: {:?} (on validator), {:?} (on server)", bonds[uid as usize][0], bonds[uid as usize][servers[0] as usize]);
     // }
 }
 
@@ -402,7 +402,7 @@ fn init_run_epochs(
 //     let validators_n: u16 = 64;
 //     let epochs: u16 = 1;
 //     let interleave = 2;
-//     log::info!("test_consensus_guarantees ({network_n:?}, {validators_n:?} validators)");
+//     log::trace!("test_consensus_guarantees ({network_n:?}, {validators_n:?} validators)");
 //     for (major_stake, major_weight, minor_weight, weight_stddev) in vec![
 //         (0.51, 1., 1., 0.001),
 //         (0.51, 0.03, 0., 0.001),
@@ -482,7 +482,7 @@ fn init_run_epochs(
 // #[test]
 // fn test_overflow() {
 //     new_test_ext(1).execute_with(|| {
-//         log::info!("test_overflow:");
+//         log::trace!("test_overflow:");
 //         let netuid: u16 = 1;
 //         add_network(netuid, 0, 0);
 //         SubtensorModule::set_max_allowed_uids(netuid, 3);
@@ -536,7 +536,7 @@ fn init_run_epochs(
 // #[test]
 // fn test_nill_epoch_subtensor() {
 //     new_test_ext(1).execute_with(|| {
-//         log::info!("test_nill_epoch:");
+//         log::trace!("test_nill_epoch:");
 //         SubtensorModule::epoch(0, 0);
 //     });
 // }
@@ -545,7 +545,7 @@ fn init_run_epochs(
 #[test]
 fn test_1_graph() {
     new_test_ext(1).execute_with(|| {
-        log::info!("test_1_graph:");
+        log::trace!("test_1_graph:");
         let netuid: u16 = 1;
         let coldkey = U256::from(0);
         let hotkey = U256::from(0);
@@ -593,10 +593,10 @@ fn test_1_graph() {
 #[test]
 fn test_10_graph() {
     new_test_ext(1).execute_with(|| {
-        log::info!("test_10_graph");
+        log::trace!("test_10_graph");
         // Function for adding a nodes to the graph.
         pub fn add_node(netuid: u16, coldkey: U256, hotkey: U256, uid: u16, stake_amount: u64) {
-            log::info!(
+            log::trace!(
                 "+Add net:{:?} coldkey:{:?} hotkey:{:?} uid:{:?} stake_amount: {:?} subn: {:?}",
                 netuid,
                 coldkey,
@@ -662,7 +662,7 @@ fn test_512_graph() {
     let validators_n: u16 = 64;
     let max_stake_per_validator: u64 = 328_125_000_000_000; // 21_000_000_000_000_000 / 64
     let epochs: u16 = 3;
-    log::info!("test_{network_n:?}_graph ({validators_n:?} validators)");
+    log::trace!("test_{network_n:?}_graph ({validators_n:?} validators)");
     for interleave in 0..3 {
         for server_self in [false, true] {
             // server-self weight off/on
@@ -732,7 +732,7 @@ fn test_512_graph_random_weights() {
     let network_n: u16 = 512;
     let validators_n: u16 = 64;
     let epochs: u16 = 1;
-    log::info!("test_{network_n:?}_graph_random_weights ({validators_n:?} validators)");
+    log::trace!("test_{network_n:?}_graph_random_weights ({validators_n:?} validators)");
     for interleave in 0..3 {
         for server_self in [false, true] {
             // server-self weight off/on
@@ -837,7 +837,7 @@ fn test_4096_graph() {
     let validators_n: u16 = 256;
     let epochs: u16 = 1;
     let max_stake_per_validator: u64 = 82_031_250_000_000; // 21_000_000_000_000_000 / 256
-    log::info!("test_{network_n:?}_graph ({validators_n:?} validators)");
+    log::trace!("test_{network_n:?}_graph ({validators_n:?} validators)");
     for interleave in 0..3 {
         let (validators, servers) = distribute_nodes(
             validators_n as usize,
@@ -915,7 +915,7 @@ fn test_16384_graph_sparse() {
         let servers: Vec<u16> = (validators_n..n).collect();
         let server: u16 = servers[0];
         let epochs: u16 = 1;
-        log::info!("test_{n:?}_graph ({validators_n:?} validators)");
+        log::trace!("test_{n:?}_graph ({validators_n:?} validators)");
         init_run_epochs(
             netuid,
             n,
@@ -1331,9 +1331,9 @@ fn test_active_stake() {
         }
         let bonds = SubtensorModule::get_bonds(netuid);
         for uid in 0..n {
-            // log::info!("\n{uid}" );
+            // log::trace!("\n{uid}" );
             // uid_stats(netuid, uid);
-            // log::info!("bonds: {:?}", bonds[uid as usize]);
+            // log::trace!("bonds: {:?}", bonds[uid as usize]);
             if uid < n / 2 {
                 assert_eq!(SubtensorModule::get_dividends_for_uid(netuid, uid), 32767);
                 // Note D = floor(0.5 * 65_535)

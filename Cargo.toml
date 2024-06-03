@@ -110,6 +110,7 @@ frame-metadata = "16"
 
 [profile.release]
 panic = "unwind"
+overflow-checks = true
 
 [profile.test]
 opt-level = 3

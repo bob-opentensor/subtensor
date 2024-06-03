@@ -2106,9 +2106,10 @@ fn test_fixed_proportion_to_u16() {
 fn test_fixed_proportion_to_u16_panics() {
     let expected = u16::MAX;
     let input = I32F32::from_num(expected);
-    fixed_proportion_to_u16(input);
+    log::trace!("Testing with input: {:?}", input); // Debug output
+    let result = fixed_proportion_to_u16(input);
+    log::trace!("Testing with result: {:?}", result); // Debug output
 }
-
 #[test]
 fn test_vec_fixed64_to_fixed32() {
     let input = vec![I64F64::from_num(i32::MIN)];

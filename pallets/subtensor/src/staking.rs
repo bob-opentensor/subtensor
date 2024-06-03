@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
     ) -> dispatch::DispatchResult {
         // --- 1. We check the coldkey signuture.
         let coldkey = ensure_signed(origin)?;
-        log::info!(
+        log::trace!(
             "do_become_delegate( origin:{:?} hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -82,7 +82,7 @@ impl<T: Config> Pallet<T> {
         Self::set_last_tx_block_delegate_take(&coldkey, block);
 
         // --- 7. Emit the staking event.
-        log::info!(
+        log::trace!(
             "DelegateAdded( coldkey:{:?}, hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -127,7 +127,7 @@ impl<T: Config> Pallet<T> {
     ) -> dispatch::DispatchResult {
         // --- 1. We check the coldkey signature.
         let coldkey = ensure_signed(origin)?;
-        log::info!(
+        log::trace!(
             "do_decrease_take( origin:{:?} hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -151,7 +151,7 @@ impl<T: Config> Pallet<T> {
         Delegates::<T>::insert(hotkey.clone(), take);
 
         // --- 5. Emit the take value.
-        log::info!(
+        log::trace!(
             "TakeDecreased( coldkey:{:?}, hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -199,7 +199,7 @@ impl<T: Config> Pallet<T> {
     ) -> dispatch::DispatchResult {
         // --- 1. We check the coldkey signature.
         let coldkey = ensure_signed(origin)?;
-        log::info!(
+        log::trace!(
             "do_increase_take( origin:{:?} hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -236,7 +236,7 @@ impl<T: Config> Pallet<T> {
         Delegates::<T>::insert(hotkey.clone(), take);
 
         // --- 7. Emit the take value.
-        log::info!(
+        log::trace!(
             "TakeIncreased( coldkey:{:?}, hotkey:{:?}, take:{:?} )",
             coldkey,
             hotkey,
@@ -284,7 +284,7 @@ impl<T: Config> Pallet<T> {
     ) -> dispatch::DispatchResult {
         // We check that the transaction is signed by the caller and retrieve the T::AccountId coldkey information.
         let coldkey = ensure_signed(origin)?;
-        log::info!(
+        log::trace!(
             "do_add_stake( origin:{:?} hotkey:{:?}, stake_to_be_added:{:?} )",
             coldkey,
             hotkey,
@@ -349,7 +349,7 @@ impl<T: Config> Pallet<T> {
             stakes_this_interval + 1,
             block,
         );
-        log::info!(
+        log::trace!(
             "StakeAdded( hotkey:{:?}, stake_to_be_added:{:?} )",
             hotkey,
             actual_amount_to_stake
@@ -396,7 +396,7 @@ impl<T: Config> Pallet<T> {
     ) -> dispatch::DispatchResult {
         // We check the transaction is signed by the caller and retrieve the T::AccountId coldkey information.
         let coldkey = ensure_signed(origin)?;
-        log::info!(
+        log::trace!(
             "do_remove_stake( origin:{:?} hotkey:{:?}, stake_to_be_removed:{:?} )",
             coldkey,
             hotkey,
@@ -455,7 +455,7 @@ impl<T: Config> Pallet<T> {
             unstakes_this_interval + 1,
             block,
         );
-        log::info!(
+        log::trace!(
             "StakeRemoved( hotkey:{:?}, stake_to_be_removed:{:?} )",
             hotkey,
             stake_to_be_removed

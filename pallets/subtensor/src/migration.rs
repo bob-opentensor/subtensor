@@ -85,13 +85,13 @@ pub fn migrate_transfer_ownership_to_foundation<T: Config>(coldkey: [u8; 32]) ->
 
     // Only runs if we haven't already updated version past above new_storage_version.
     if onchain_version < new_storage_version {
-        trace!(target: LOG_TARGET_1, ">>> Migrating subnet 1 and 11 to foundation control {:?}", onchain_version);
+        info!(target: LOG_TARGET_1, ">>> Migrating subnet 1 and 11 to foundation control {:?}", onchain_version);
 
         // We have to decode this using a byte slice as we don't have crypto-std
         let coldkey_account: <T as frame_system::Config>::AccountId =
             <T as frame_system::Config>::AccountId::decode(&mut &coldkey[..])
                 .expect("coldkey is 32-byte array; qed");
-        trace!("Foundation coldkey: {:?}", coldkey_account);
+        info!("Foundation coldkey: {:?}", coldkey_account);
 
         let current_block = Pallet::<T>::get_current_block_as_u64();
         weight.saturating_accrue(T::DbWeight::get().reads(1));
@@ -112,7 +112,7 @@ pub fn migrate_transfer_ownership_to_foundation<T: Config>(coldkey: [u8; 32]) ->
 
         weight
     } else {
-        trace!(target: LOG_TARGET_1, "Migration to v3 already done!");
+        info!(target: LOG_TARGET_1, "Migration to v3 already done!");
         Weight::zero()
     }
 }
@@ -186,7 +186,7 @@ pub fn migrate_delete_subnet_3<T: Config>() -> Weight {
 
     // Only runs if we haven't already updated version past above new_storage_version.
     if onchain_version < new_storage_version && Pallet::<T>::if_subnet_exist(3) {
-        trace!(target: LOG_TARGET_1, ">>> Removing subnet 3 {:?}", onchain_version);
+        info!(target: LOG_TARGET_1, ">>> Removing subnet 3 {:?}", onchain_version);
 
         let netuid = 3;
 
@@ -254,7 +254,7 @@ pub fn migrate_delete_subnet_3<T: Config>() -> Weight {
 
         weight
     } else {
-        trace!(target: LOG_TARGET_1, "Migration to v3 already done!");
+        info!(target: LOG_TARGET_1, "Migration to v3 already done!");
         Weight::zero()
     }
 }
@@ -270,7 +270,7 @@ pub fn migrate_delete_subnet_21<T: Config>() -> Weight {
 
     // Only runs if we haven't already updated version past above new_storage_version.
     if onchain_version < new_storage_version && Pallet::<T>::if_subnet_exist(21) {
-        trace!(target: LOG_TARGET_1, ">>> Removing subnet 21 {:?}", onchain_version);
+        info!(target: LOG_TARGET_1, ">>> Removing subnet 21 {:?}", onchain_version);
 
         let netuid = 21;
 
@@ -338,7 +338,7 @@ pub fn migrate_delete_subnet_21<T: Config>() -> Weight {
 
         weight
     } else {
-        trace!(target: LOG_TARGET_1, "Migration to v4 already done!");
+        info!(target: LOG_TARGET_1, "Migration to v4 already done!");
         Weight::zero()
     }
 }
@@ -353,7 +353,7 @@ pub fn migrate_to_v1_separate_emission<T: Config>() -> Weight {
 
     // Only runs if we haven't already updated version to 1.
     if onchain_version < 1 {
-        trace!(target: LOG_TARGET, ">>> Updating the LoadedEmission to a new format {:?}", onchain_version);
+        info!(target: LOG_TARGET, ">>> Updating the LoadedEmission to a new format {:?}", onchain_version);
 
         // We transform the storage values from the old into the new format.
 
@@ -377,7 +377,7 @@ pub fn migrate_to_v1_separate_emission<T: Config>() -> Weight {
             |netuid: u16,
              netuid_emissions: Vec<(AccountIdOf<T>, u64)>|
              -> Option<Vec<(AccountIdOf<T>, u64, u64)>> {
-                trace!(target: LOG_TARGET, "     Do migration of netuid: {:?}...", netuid);
+                info!(target: LOG_TARGET, "     Do migration of netuid: {:?}...", netuid);
 
                 // We will assume all loaded emission is validator emissions,
                 // so this will get distributed over delegatees (nominators), if there are any
@@ -403,7 +403,7 @@ pub fn migrate_to_v1_separate_emission<T: Config>() -> Weight {
 
         weight
     } else {
-        trace!(target: LOG_TARGET_1, "Migration to v2 already done!");
+        info!(target: LOG_TARGET_1, "Migration to v2 already done!");
         Weight::zero()
     }
 }
@@ -421,7 +421,7 @@ pub fn migrate_to_v2_fixed_total_stake<T: Config>() -> Weight {
 
     // Only runs if we haven't already updated version past above new_storage_version.
     if onchain_version < new_storage_version {
-        trace!(target: LOG_TARGET_1, ">>> Fixing the TotalStake and TotalColdkeyStake storage {:?}", onchain_version);
+        info!(target: LOG_TARGET_1, ">>> Fixing the TotalStake and TotalColdkeyStake storage {:?}", onchain_version);
 
         // Stake and TotalHotkeyStake are known to be accurate
         // TotalColdkeyStake is known to be inaccurate
@@ -470,7 +470,7 @@ pub fn migrate_to_v2_fixed_total_stake<T: Config>() -> Weight {
 
         weight
     } else {
-        trace!(target: LOG_TARGET_1, "Migration to v2 already done!");
+        info!(target: LOG_TARGET_1, "Migration to v2 already done!");
         Weight::zero()
     }
 }

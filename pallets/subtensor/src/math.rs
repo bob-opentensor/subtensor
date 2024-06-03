@@ -1161,7 +1161,7 @@ pub fn mat_ema_alpha_vec_sparse(
         for (j, value) in new[i].iter() {
             let alpha_val: I32F32 = alpha[*j as usize];
             row[*j as usize] = alpha_val * value;
-            log::trace!(
+            log::debug!(
                 "new[{}][{}] * alpha[{}] = {} * {} = {}",
                 i,
                 j,
@@ -1176,7 +1176,7 @@ pub fn mat_ema_alpha_vec_sparse(
             let alpha_val: I32F32 = alpha[*j as usize];
             let one_minus_alpha: I32F32 = I32F32::from_num(1.0) - alpha_val;
             row[*j as usize] += one_minus_alpha * value;
-            log::trace!(
+            log::debug!(
                 "old[{}][{}] * (1 - alpha[{}]) = {} * {} = {}",
                 i,
                 j,
@@ -1190,7 +1190,7 @@ pub fn mat_ema_alpha_vec_sparse(
         for (j, value) in row.iter().enumerate() {
             if *value > zero {
                 result[i].push((j as u16, *value));
-                log::trace!("result[{}][{}] = {}", i, j, value);
+                log::info!("result[{}][{}] = {}", i, j, value);
             }
         }
     }

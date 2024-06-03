@@ -1,4 +1,4 @@
 pallet="${3:-pallet-subtensor}"
 features="${4:-pow-faucet}"
 
-RUST_LOG=trace cargo test --features=$features -p $pallet --test $1 -- $2 --nocapture --exact
+RUST_LOG=info cargo test --features=$features -p $pallet --test $1 -- $2 --nocapture --exact

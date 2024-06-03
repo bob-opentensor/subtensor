@@ -88,7 +88,7 @@ pub mod pallet {
 
             T::Aura::change_authorities(new_authorities.clone());
 
-            log::trace!("Aura authorities changed: {:?}", new_authorities);
+            log::info!("Aura authorities changed: {:?}", new_authorities);
 
             // Return a successful DispatchResultWithPostInfo
             Ok(())
@@ -102,7 +102,7 @@ pub mod pallet {
         pub fn sudo_set_default_take(origin: OriginFor<T>, default_take: u16) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_max_delegate_take(default_take);
-            log::trace!("DefaultTakeSet( default_take: {:?} ) ", default_take);
+            log::info!("DefaultTakeSet( default_take: {:?} ) ", default_take);
             Ok(())
         }
 
@@ -114,7 +114,7 @@ pub mod pallet {
         pub fn sudo_set_tx_rate_limit(origin: OriginFor<T>, tx_rate_limit: u64) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_tx_rate_limit(tx_rate_limit);
-            log::trace!("TxRateLimitSet( tx_rate_limit: {:?} ) ", tx_rate_limit);
+            log::info!("TxRateLimitSet( tx_rate_limit: {:?} ) ", tx_rate_limit);
             Ok(())
         }
 
@@ -131,7 +131,7 @@ pub mod pallet {
             T::Subtensor::ensure_subnet_owner_or_root(origin, netuid)?;
 
             T::Subtensor::set_serving_rate_limit(netuid, serving_rate_limit);
-            log::trace!(
+            log::info!(
                 "ServingRateLimitSet( serving_rate_limit: {:?} ) ",
                 serving_rate_limit
             );
@@ -155,7 +155,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_min_difficulty(netuid, min_difficulty);
-            log::trace!(
+            log::info!(
                 "MinDifficultySet( netuid: {:?} min_difficulty: {:?} ) ",
                 netuid,
                 min_difficulty
@@ -180,7 +180,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_max_difficulty(netuid, max_difficulty);
-            log::trace!(
+            log::info!(
                 "MaxDifficultySet( netuid: {:?} max_difficulty: {:?} ) ",
                 netuid,
                 max_difficulty
@@ -205,7 +205,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_weights_version_key(netuid, weights_version_key);
-            log::trace!(
+            log::info!(
                 "WeightsVersionKeySet( netuid: {:?} weights_version_key: {:?} ) ",
                 netuid,
                 weights_version_key
@@ -230,7 +230,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_weights_set_rate_limit(netuid, weights_set_rate_limit);
-            log::trace!(
+            log::info!(
                 "WeightsSetRateLimitSet( netuid: {:?} weights_set_rate_limit: {:?} ) ",
                 netuid,
                 weights_set_rate_limit
@@ -255,7 +255,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_adjustment_interval(netuid, adjustment_interval);
-            log::trace!(
+            log::info!(
                 "AdjustmentIntervalSet( netuid: {:?} adjustment_interval: {:?} ) ",
                 netuid,
                 adjustment_interval
@@ -286,7 +286,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_adjustment_alpha(netuid, adjustment_alpha);
-            log::trace!(
+            log::info!(
                 "AdjustmentAlphaSet( adjustment_alpha: {:?} ) ",
                 adjustment_alpha
             );
@@ -310,7 +310,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_max_weight_limit(netuid, max_weight_limit);
-            log::trace!(
+            log::info!(
                 "MaxWeightLimitSet( netuid: {:?} max_weight_limit: {:?} ) ",
                 netuid,
                 max_weight_limit
@@ -335,7 +335,7 @@ pub mod pallet {
             );
 
             T::Subtensor::set_immunity_period(netuid, immunity_period);
-            log::trace!(
+            log::info!(
                 "ImmunityPeriodSet( netuid: {:?} immunity_period: {:?} ) ",
                 netuid,
                 immunity_period
@@ -360,7 +360,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_min_allowed_weights(netuid, min_allowed_weights);
-            log::trace!(
+            log::info!(
                 "MinAllowedWeightSet( netuid: {:?} min_allowed_weights: {:?} ) ",
                 netuid,
                 min_allowed_weights
@@ -388,7 +388,7 @@ pub mod pallet {
                 Error::<T>::MaxAllowedUIdsLessThanCurrentUIds
             );
             T::Subtensor::set_max_allowed_uids(netuid, max_allowed_uids);
-            log::trace!(
+            log::info!(
                 "MaxAllowedUidsSet( netuid: {:?} max_allowed_uids: {:?} ) ",
                 netuid,
                 max_allowed_uids
@@ -409,7 +409,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_kappa(netuid, kappa);
-            log::trace!("KappaSet( netuid: {:?} kappa: {:?} ) ", netuid, kappa);
+            log::info!("KappaSet( netuid: {:?} kappa: {:?} ) ", netuid, kappa);
             Ok(())
         }
 
@@ -426,7 +426,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_rho(netuid, rho);
-            log::trace!("RhoSet( netuid: {:?} rho: {:?} ) ", netuid, rho);
+            log::info!("RhoSet( netuid: {:?} rho: {:?} ) ", netuid, rho);
             Ok(())
         }
 
@@ -447,7 +447,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_activity_cutoff(netuid, activity_cutoff);
-            log::trace!(
+            log::info!(
                 "ActivityCutoffSet( netuid: {:?} activity_cutoff: {:?} ) ",
                 netuid,
                 activity_cutoff
@@ -474,7 +474,7 @@ pub mod pallet {
             T::Subtensor::ensure_subnet_owner_or_root(origin, netuid)?;
 
             T::Subtensor::set_network_registration_allowed(netuid, registration_allowed);
-            log::trace!(
+            log::info!(
                 "NetworkRegistrationAllowed( registration_allowed: {:?} ) ",
                 registration_allowed
             );
@@ -499,7 +499,7 @@ pub mod pallet {
             T::Subtensor::ensure_subnet_owner_or_root(origin, netuid)?;
 
             T::Subtensor::set_network_pow_registration_allowed(netuid, registration_allowed);
-            log::trace!(
+            log::info!(
                 "NetworkPowRegistrationAllowed( registration_allowed: {:?} ) ",
                 registration_allowed
             );
@@ -526,7 +526,7 @@ pub mod pallet {
                 netuid,
                 target_registrations_per_interval,
             );
-            log::trace!(
+            log::info!(
             "RegistrationPerIntervalSet( netuid: {:?} target_registrations_per_interval: {:?} ) ",
             netuid,
             target_registrations_per_interval
@@ -551,7 +551,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_min_burn(netuid, min_burn);
-            log::trace!(
+            log::info!(
                 "MinBurnSet( netuid: {:?} min_burn: {:?} ) ",
                 netuid,
                 min_burn
@@ -576,7 +576,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_max_burn(netuid, max_burn);
-            log::trace!(
+            log::info!(
                 "MaxBurnSet( netuid: {:?} max_burn: {:?} ) ",
                 netuid,
                 max_burn
@@ -600,7 +600,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_difficulty(netuid, difficulty);
-            log::trace!(
+            log::info!(
                 "DifficultySet( netuid: {:?} difficulty: {:?} ) ",
                 netuid,
                 difficulty
@@ -629,7 +629,7 @@ pub mod pallet {
             );
 
             T::Subtensor::set_max_allowed_validators(netuid, max_allowed_validators);
-            log::trace!(
+            log::info!(
                 "MaxAllowedValidatorsSet( netuid: {:?} max_allowed_validators: {:?} ) ",
                 netuid,
                 max_allowed_validators
@@ -654,7 +654,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_bonds_moving_average(netuid, bonds_moving_average);
-            log::trace!(
+            log::info!(
                 "BondsMovingAverageSet( netuid: {:?} bonds_moving_average: {:?} ) ",
                 netuid,
                 bonds_moving_average
@@ -679,7 +679,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_max_registrations_per_block(netuid, max_registrations_per_block);
-            log::trace!(
+            log::info!(
                 "MaxRegistrationsPerBlock( netuid: {:?} max_registrations_per_block: {:?} ) ",
                 netuid,
                 max_registrations_per_block
@@ -703,7 +703,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_subnet_owner_cut(subnet_owner_cut);
-            log::trace!(
+            log::info!(
                 "SubnetOwnerCut( subnet_owner_cut: {:?} ) ",
                 subnet_owner_cut
             );
@@ -726,7 +726,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_network_rate_limit(rate_limit);
-            log::trace!("NetworkRateLimit( rate_limit: {:?} ) ", rate_limit);
+            log::info!("NetworkRateLimit( rate_limit: {:?} ) ", rate_limit);
             Ok(())
         }
 
@@ -742,7 +742,7 @@ pub mod pallet {
                 Error::<T>::SubnetDoesNotExist
             );
             T::Subtensor::set_tempo(netuid, tempo);
-            log::trace!("TempoSet( netuid: {:?} tempo: {:?} ) ", netuid, tempo);
+            log::info!("TempoSet( netuid: {:?} tempo: {:?} ) ", netuid, tempo);
             Ok(())
         }
 
@@ -780,7 +780,7 @@ pub mod pallet {
 
             T::Subtensor::set_network_immunity_period(immunity_period);
 
-            log::trace!("NetworkImmunityPeriod( period: {:?} ) ", immunity_period);
+            log::info!("NetworkImmunityPeriod( period: {:?} ) ", immunity_period);
 
             Ok(())
         }
@@ -803,7 +803,7 @@ pub mod pallet {
 
             T::Subtensor::set_network_min_lock(lock_cost);
 
-            log::trace!("NetworkMinLockCost( lock_cost: {:?} ) ", lock_cost);
+            log::info!("NetworkMinLockCost( lock_cost: {:?} ) ", lock_cost);
 
             Ok(())
         }
@@ -822,7 +822,7 @@ pub mod pallet {
             ensure_root(origin)?;
             T::Subtensor::set_subnet_limit(max_subnets);
 
-            log::trace!("SubnetLimit( max_subnets: {:?} ) ", max_subnets);
+            log::info!("SubnetLimit( max_subnets: {:?} ) ", max_subnets);
 
             Ok(())
         }
@@ -845,7 +845,7 @@ pub mod pallet {
 
             T::Subtensor::set_lock_reduction_interval(interval);
 
-            log::trace!("NetworkLockReductionInterval( interval: {:?} ) ", interval);
+            log::info!("NetworkLockReductionInterval( interval: {:?} ) ", interval);
 
             Ok(())
         }
@@ -913,7 +913,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_tx_delegate_take_rate_limit(tx_rate_limit);
-            log::trace!(
+            log::info!(
                 "TxRateLimitDelegateTakeSet( tx_delegate_take_rate_limit: {:?} ) ",
                 tx_rate_limit
             );
@@ -928,7 +928,7 @@ pub mod pallet {
         pub fn sudo_set_min_delegate_take(origin: OriginFor<T>, take: u16) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_min_delegate_take(take);
-            log::trace!("TxMinDelegateTakeSet( tx_min_delegate_take: {:?} ) ", take);
+            log::info!("TxMinDelegateTakeSet( tx_min_delegate_take: {:?} ) ", take);
             Ok(())
         }
 
@@ -943,7 +943,7 @@ pub mod pallet {
         ) -> DispatchResult {
             ensure_root(origin)?;
             T::Subtensor::set_target_stakes_per_interval(target_stakes_per_interval);
-            log::trace!(
+            log::info!(
                 "TxTargetStakesPerIntervalSet( set_target_stakes_per_interval: {:?} ) ",
                 target_stakes_per_interval
             );
@@ -968,7 +968,7 @@ pub mod pallet {
             );
 
             T::Subtensor::set_commit_reveal_weights_interval(netuid, interval);
-            log::trace!(
+            log::info!(
                 "SetWeightCommitInterval( netuid: {:?}, interval: {:?} ) ",
                 netuid,
                 interval
@@ -994,7 +994,7 @@ pub mod pallet {
             );
 
             T::Subtensor::set_commit_reveal_weights_enabled(netuid, enabled);
-            log::trace!("ToggleSetWeightsCommitReveal( netuid: {:?} ) ", netuid);
+            log::info!("ToggleSetWeightsCommitReveal( netuid: {:?} ) ", netuid);
             Ok(())
         }
     }

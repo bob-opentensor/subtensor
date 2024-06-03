@@ -118,19 +118,19 @@ impl<T: Config> Pallet<T> {
 
         // Mask weights that are not from permitted validators.
         inplace_mask_rows(&validator_forbids, &mut weights);
-        log::trace!( "W (permit): {:?}", &weights );
+        log::trace!("W (permit): {:?}", &weights);
 
         // Remove self-weight by masking diagonal.
         inplace_mask_diag(&mut weights);
-        log::trace!( "W (permit+diag):\n{:?}\n", &weights );
+        log::trace!("W (permit+diag):\n{:?}\n", &weights);
 
         // Mask outdated weights: remove weights referring to deregistered neurons.
         inplace_mask_matrix(&outdated, &mut weights);
-        log::trace!( "W (permit+diag+outdate):\n{:?}\n", &weights );
+        log::trace!("W (permit+diag+outdate):\n{:?}\n", &weights);
 
         // Normalize remaining weights.
         inplace_row_normalize(&mut weights);
-        log::trace!( "W (mask+norm):\n{:?}\n", &weights );
+        log::trace!("W (mask+norm):\n{:?}\n", &weights);
 
         // ================================
         // == Consensus, Validator Trust ==
@@ -167,7 +167,7 @@ impl<T: Config> Pallet<T> {
         let mut bonds: Vec<Vec<I32F32>> = Self::get_bonds(netuid);
         inplace_mask_matrix(&outdated, &mut bonds); // mask outdated bonds
         inplace_col_normalize(&mut bonds); // sum_i b_ij = 1
-                                           log::trace!( "B:\n{:?}\n", &bonds );
+        log::trace!("B:\n{:?}\n", &bonds);
 
         // Compute bonds delta column normalized.
         let mut bonds_delta: Vec<Vec<I32F32>> = row_hadamard(&weights, &active_stake); // ΔB = W◦S

@@ -219,8 +219,8 @@ fn test_root_set_weights() {
             ));
         }
 
-        log::trace!("subnet limit: {:?}", SubtensorModule::get_max_subnets());
-        log::trace!(
+        log::info!("subnet limit: {:?}", SubtensorModule::get_max_subnets());
+        log::info!(
             "current subnet count: {:?}",
             SubtensorModule::get_num_subnets()
         );
@@ -361,8 +361,8 @@ fn test_root_set_weights_out_of_order_netuids() {
             ));
         }
 
-        log::trace!("subnet limit: {:?}", SubtensorModule::get_max_subnets());
-        log::trace!(
+        log::info!("subnet limit: {:?}", SubtensorModule::get_max_subnets());
+        log::info!(
             "current subnet count: {:?}",
             SubtensorModule::get_num_subnets()
         );
@@ -380,8 +380,8 @@ fn test_root_set_weights_out_of_order_netuids() {
             }
         }
 
-        log::trace!("netuids: {:?}", SubtensorModule::get_all_subnet_netuids());
-        log::trace!(
+        log::info!("netuids: {:?}", SubtensorModule::get_all_subnet_netuids());
+        log::info!(
             "root network count: {:?}",
             SubtensorModule::get_subnetwork_n(0)
         );
@@ -717,9 +717,9 @@ fn test_weights_after_network_pruning() {
         // Let's give these subnets some weights
         let uids: Vec<u16> = (0..(n as u16) + 1).collect();
         let values: Vec<u16> = vec![4u16, 2u16, 6u16];
-        log::trace!("uids set: {:?}", uids);
-        log::trace!("values set: {:?}", values);
-        log::trace!("In netuid: {:?}", root_netuid);
+        log::info!("uids set: {:?}", uids);
+        log::info!("values set: {:?}", values);
+        log::info!("In netuid: {:?}", root_netuid);
         assert_ok!(SubtensorModule::set_root_weights(
             <<Test as Config>::RuntimeOrigin>::signed(cold),
             root_netuid,
@@ -729,11 +729,11 @@ fn test_weights_after_network_pruning() {
             0
         ));
 
-        log::trace!(
+        log::info!(
             "Root network weights before extra network registration: {:?}",
             SubtensorModule::get_root_weights()
         );
-        log::trace!("Max subnets: {:?}", SubtensorModule::get_max_subnets());
+        log::info!("Max subnets: {:?}", SubtensorModule::get_max_subnets());
         let i = (n as u16) + 1;
         // let _hot: U256 = U256::from(i);
         let cold: U256 = U256::from(i);
@@ -743,11 +743,11 @@ fn test_weights_after_network_pruning() {
 
         // Subnet 1 should be pruned here.
         assert_eq!(subnet_to_prune, 1);
-        log::trace!("Removing subnet: {:?}", subnet_to_prune);
+        log::info!("Removing subnet: {:?}", subnet_to_prune);
 
         // Check that the weights have been set appropriately.
         let latest_weights = SubtensorModule::get_root_weights();
-        log::trace!("Weights before register network: {:?}", latest_weights);
+        log::info!("Weights before register network: {:?}", latest_weights);
         // We expect subnet 1 to be deregistered as it is oldest and has lowest emissions
         assert_eq!(latest_weights[0][1], 21845);
 
@@ -758,13 +758,13 @@ fn test_weights_after_network_pruning() {
         // Subnet should not exist, as it would replace a previous subnet.
         assert!(!SubtensorModule::if_subnet_exist(i + 1));
 
-        log::trace!(
+        log::info!(
             "Root network weights: {:?}",
             SubtensorModule::get_root_weights()
         );
 
         let latest_weights = SubtensorModule::get_root_weights();
-        log::trace!(
+        log::info!(
             "Weights after register network: {:?}",
             SubtensorModule::get_root_weights()
         );

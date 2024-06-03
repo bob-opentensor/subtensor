@@ -73,8 +73,8 @@ fn test_loaded_emission() {
             if let Some(tuples) = SubtensorModule::get_loaded_emission_tuples(netuid) {
                 assert_eq!(tuples.len(), n_remaining - n_to_drain);
             }
-            log::trace!("n_to_drain: {:?}", n_to_drain);
-            log::trace!(
+            log::info!("n_to_drain: {:?}", n_to_drain);
+            log::info!(
                 "SubtensorModule::get_loaded_emission_tuples( netuid ).len(): {:?}",
                 n_remaining - n_to_drain
             );
@@ -851,14 +851,14 @@ fn test_emission_based_on_registration_status() {
 
         // Verify that no emission tuples are loaded for the subnet with registration off
         assert!(SubtensorModule::get_loaded_emission_tuples(netuid_off).is_none());
-        log::trace!(
+        log::info!(
             "Emissions for netuid with registration off: {:?}",
             SubtensorModule::get_loaded_emission_tuples(netuid_off)
         );
 
         // Verify that emission tuples are loaded for the subnet with registration on
         assert!(SubtensorModule::get_loaded_emission_tuples(netuid_on).is_some());
-        log::trace!(
+        log::info!(
             "Emissions for netuid with registration on: {:?}",
             SubtensorModule::get_loaded_emission_tuples(netuid_on)
         );
@@ -881,7 +881,7 @@ fn test_emission_based_on_registration_status() {
 
         // Verify that emission tuples are now loaded for the subnet with registration turned on
         assert!(SubtensorModule::get_loaded_emission_tuples(netuid_off).is_some());
-        log::trace!(
+        log::info!(
             "Emissions for netuid with registration on: {:?}",
             SubtensorModule::get_loaded_emission_tuples(netuid_on)
         );

@@ -2413,7 +2413,7 @@ fn test_faucet_ok() {
     new_test_ext(1).execute_with(|| {
         let coldkey = U256::from(123560);
 
-        log::trace!("Creating work for submission to faucet...");
+        log::info!("Creating work for submission to faucet...");
 
         let block_number = SubtensorModule::get_current_block_as_u64();
         let difficulty: U256 = U256::from(10_000_000);
@@ -2425,7 +2425,7 @@ fn test_faucet_ok() {
         }
         let vec_work: Vec<u8> = SubtensorModule::hash_to_vec(work);
 
-        log::trace!("Faucet state: {}", cfg!(feature = "pow-faucet"));
+        log::info!("Faucet state: {}", cfg!(feature = "pow-faucet"));
 
         #[cfg(feature = "pow-faucet")]
         assert_ok!(SubtensorModule::do_faucet(

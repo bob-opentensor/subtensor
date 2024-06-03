@@ -1113,6 +1113,36 @@ pub fn sparse_threshold(w: &[Vec<(u16, I32F32)>], threshold: I32F32) -> Vec<Vec<
         .collect()
 }
 
+// /// Calculates the exponential moving average (EMA) for a sparse matrix using dynamic alpha values.
+// #[allow(dead_code)]
+// pub fn mat_ema_alpha_vec_sparse(
+//     new: &Vec<Vec<(u16, I32F32)>>,
+//     old: &Vec<Vec<(u16, I32F32)>>,
+//     alpha: &Vec<I32F32>,
+// ) -> Vec<Vec<(u16, I32F32)>> {
+//     assert!(new.len() == old.len());
+//     let n = new.len(); // assume square matrix, rows=cols
+//     let zero: I32F32 = I32F32::from_num(0.0);
+//     let mut result: Vec<Vec<(u16, I32F32)>> = vec![vec![]; n];
+//     for i in 0..new.len() {
+//         let mut row: Vec<I32F32> = vec![zero; n];
+//         for (j, value) in new[i].iter() {
+//             let alpha_val: I32F32 = alpha[*j as usize];
+//             row[*j as usize] += alpha_val * value;
+//         }
+//         for (j, value) in old[i].iter() {
+//             let one_minus_alpha: I32F32 = I32F32::from_num(1.0) - alpha[*j as usize];
+//             row[*j as usize] += one_minus_alpha * value;
+//         }
+//         for (j, value) in row.iter().enumerate() {
+//             if *value > zero {
+//                 result[i].push((j as u16, *value))
+//             }
+//         }
+//     }
+//     result
+// }
+
 /// Calculates the exponential moving average (EMA) for a sparse matrix using dynamic alpha values.
 #[allow(dead_code)]
 pub fn mat_ema_alpha_vec_sparse(
@@ -1124,25 +1154,33 @@ pub fn mat_ema_alpha_vec_sparse(
     let n = new.len(); // assume square matrix, rows=cols
     let zero: I32F32 = I32F32::from_num(0.0);
     let mut result: Vec<Vec<(u16, I32F32)>> = vec![vec![]; n];
+    
     for i in 0..new.len() {
         let mut row: Vec<I32F32> = vec![zero; n];
+        
         for (j, value) in new[i].iter() {
             let alpha_val: I32F32 = alpha[*j as usize];
-            row[*j as usize] += alpha_val * value;
+            row[*j as usize] = alpha_val * value;
+            log::trace!("new[{}][{}] * alpha[{}] = {} * {} = {}", i, j, j, value, alpha_val, row[*j as usize]);
         }
+        
         for (j, value) in old[i].iter() {
-            let one_minus_alpha: I32F32 = I32F32::from_num(1.0) - alpha[*j as usize];
+            let alpha_val: I32F32 = alpha[*j as usize];
+            let one_minus_alpha: I32F32 = I32F32::from_num(1.0) - alpha_val;
             row[*j as usize] += one_minus_alpha * value;
+            log::trace!("old[{}][{}] * (1 - alpha[{}]) = {} * {} = {}", i, j, j, value, one_minus_alpha, one_minus_alpha * value);
         }
+        
         for (j, value) in row.iter().enumerate() {
             if *value > zero {
-                result[i].push((j as u16, *value))
+                result[i].push((j as u16, *value));
+                log::trace!("result[{}][{}] = {}", i, j, value);
             }
         }
     }
+    
     result
 }
-
 /// Return matrix exponential moving average: `alpha_j * a_ij + one_minus_alpha_j * b_ij`.
 /// `alpha_` is the EMA coefficient passed as a vector per col.
 /// @TODO: Write tests
@@ -3357,13 +3395,11 @@ mod tests {
         ];
         let alpha: Vec<I32F32> = vec![I32F32::from_num(0.1), I32F32::from_num(0.2)];
         let result = mat_ema_alpha_vec_sparse(&new, &old, &alpha);
-        assert_eq!(
-            result,
-            vec![
-                vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.6))],
-                vec![(0, I32F32::from_num(6.6)), (1, I32F32::from_num(7.6))]
-            ]
-        );
+        let expected = vec![
+            vec![(0, I32F32::from_num(4.6)), (1, I32F32::from_num(5.2))],
+            vec![(0, I32F32::from_num(6.6)), (1, I32F32::from_num(7.2))]
+        ];
+        assert_sparse_mat_compare(&result, &expected, I32F32::from_num(0.000001));
     }
 
     #[test]

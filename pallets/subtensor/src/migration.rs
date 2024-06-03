@@ -6,7 +6,7 @@ use frame_support::{
     traits::{fungible::Inspect as _, Get, GetStorageVersion, StorageVersion},
     weights::Weight,
 };
-use log::info;
+use log::trace;
 use sp_std::vec::Vec;
 
 // TODO (camfairchild): TEST MIGRATION

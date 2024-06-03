@@ -1252,7 +1252,7 @@ pub mod pallet {
             match block_step_result {
                 Ok(_) => {
                     // --- If the block step was successful, return the weight.
-                    log::info!("Successfully ran block step.");
+                    log::trace!("Successfully ran block step.");
                     Weight::from_parts(110_634_229_000_u64, 0)
                         .saturating_add(T::DbWeight::get().reads(8304_u64))
                         .saturating_add(T::DbWeight::get().writes(110_u64))
